@@ -4,6 +4,7 @@ const attemptLimiters = require("../middlewares/limiter.middleware").limiter;
 const AccountModel = require("../models/account.model");
 const { secret } = require("../config");
 const { NotFound, Ok, TooManyIncorrectLoginAttempts, EmailOccupied } = require("../helpers/response.helper");
+const { dateAdd } = require("../helpers/date.helper");
 
 module.exports = {
   register: async (req, res) => {
@@ -41,9 +42,14 @@ module.exports = {
       bcrypt.compare(req.body.password, user.password, async (err, success) => {
         if (success) {
           const token = jwt.sign({ user: user._id }, secret, { expiresIn: "8h" });
-          user.password = undefined;
-          res.status(200).send({ token: token, user })
           await attemptLimiters.loginAttemptLimiterRedis.delete(usernameIPkey);
+          user.password = undefined;
+          if (process.env.NODE_ENV === 'production') {
+            res.cookie('Authorization', token, { expires: dateAdd(new Date(), 'hour', 8), path: "/", httpOnly: true, secure: true });
+          } else {
+            res.cookie('Authorization', token, { expires: dateAdd(new Date(), 'hour', 8), path: "/", httpOnly: false, secure: false, });
+          }
+          res.status(200).send(user)
         } else {
           try {
             await attemptLimiters.loginAttemptLimiterRedis.consume(usernameIPkey);
@@ -66,8 +72,10 @@ module.exports = {
   getInfo: async (req, res) => {
     const user = await AccountModel.findOne({ _id: req.decoded.user }, { password: 0 });
     if (user) {
-      // const newToken = jwt.sign({ user: req.decoded.user }, secret, { expiresIn: "1h" });
-      res.json({ email: user.email });// token: newToken
+      const { firstName, lastName, email } = user;
+      res.json({ firstName, lastName, email });
+    } else {
+      res.status(404).send(NotFound);
     }
   },
   testMethod: async (req, res) => {

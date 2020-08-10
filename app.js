@@ -14,10 +14,10 @@ mongoose.Promise = global.Promise;
 mongoose
   .connect(app.get("env") === "development" ? dbDev : process.env.DB_STRING, { useNewUrlParser: true })
   .then(function (res) {
-    console.log("Connected to Database Successfully.");
+    console.log("Auth app, connected successfully.");
   })
   .catch(function () {
-    console.log("Connection to database failed.");
+    console.log("Auth app, connecting failed.");
   });
 
 // support parsing of application/json type post data
@@ -37,8 +37,9 @@ app.use(limiterMiddleware.rateLimiterMiddleware);
 
 // Account
 const accountRoutes = require("./server/routes/account.routes");
+
 // ROUTES
-app.use("/api/account", accountRoutes);
+app.use("/auth/account", accountRoutes);
 
 // app.get('/api/t0', (req, res) => {
 //   res.cookie('TestAuthorizationNormal', 'TestAuthorizationNormalVALUE', { maxAge: 900000, expires: new Date(Date.now() + 9999999), path: "/", httpOnly: false, secure: false, });
