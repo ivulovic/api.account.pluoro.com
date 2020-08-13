@@ -45,9 +45,9 @@ module.exports = {
           await attemptLimiters.loginAttemptLimiterRedis.delete(usernameIPkey);
           user.password = undefined;
           if (process.env.NODE_ENV === 'production') {
-            res.cookie('Authorization', token, { expires: dateAdd(new Date(), 'hour', 8), path: "/", httpOnly: true, secure: true });
+            res.cookie('Authorization', token, { expires: dateAdd(new Date(), 'hour', 8), path: "/", sameSite: "Strict", httpOnly: true, secure: true });
           } else {
-            res.cookie('Authorization', token, { expires: dateAdd(new Date(), 'hour', 8), path: "/", httpOnly: false, secure: false, });
+            res.cookie('Authorization', token, { expires: dateAdd(new Date(), 'hour', 8), path: "/", sameSite: "Strict", httpOnly: false, secure: false, });
           }
           res.status(200).send(user)
         } else {
